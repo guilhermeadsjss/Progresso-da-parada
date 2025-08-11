@@ -2,11 +2,20 @@ import streamlit as st
 import pandas as pd
 from pathlib import Path
 
+# Configurações iniciais
 st.set_page_config(
     page_title="Dashboard de Controle de Atividades",
     page_icon="📊",
     layout="wide"
 )
+
+# --- Adicionar logo ---
+logo_path = Path(__file__).parent / "images (1).png"  # coloque sua logo na mesma pasta
+if logo_path.is_file():
+    st.image(str(logo_path), width=180)  # Ajuste de tamanho da logo
+
+st.title("📊 Dashboard de Controle de Atividades")
+st.markdown("---")
 
 DATA_FILE = Path(__file__).parent / "Banco_Dashboard.xlsx"
 
@@ -17,22 +26,14 @@ def carregar_dados():
         return pd.DataFrame()
 
     df = pd.read_excel(DATA_FILE, sheet_name="dados_corrigidos")
-
-    # Garantir tipos corretos
     df['M2_Previsto'] = pd.to_numeric(df['M2_Previsto'], errors='coerce').fillna(0)
     df['M2_Realizado'] = pd.to_numeric(df['M2_Realizado'], errors='coerce').fillna(0)
     df['%_Conclusão'] = pd.to_numeric(df['%_Conclusão'], errors='coerce').fillna(0)
     df['%_Conclusão_Ajustado'] = pd.to_numeric(df['%_Conclusão_Ajustado'], errors='coerce').fillna(0)
-
-    # Adicionar ID único
     df.insert(0, 'id', range(len(df)))
-
     return df
 
 df = carregar_dados()
-
-st.title("📊 Dashboard de Controle de Atividades")
-st.markdown("---")
 
 if not df.empty:
     # --- Filtros ---
@@ -83,8 +84,15 @@ if not df.empty:
         status_counts = df_filtrado['Status'].value_counts()
         st.bar_chart(status_counts)
 
-    # --- Visualização da Tabela ---
-    with st.expander("Ver Tabela de Dados Filtrada"):
-        st.dataframe(df_filtrado.drop(columns=['id']))
+    # --- Visualização detalhada ---
+    st.markdown("### 📋 Detalhes das Atividades")
+    for _, row in df_filtrado.iterrows():
+        with st.expander(f"🔹 {row['Área/Sistema']} - {row['Descrição']}"):
+            st.write(f"**Status:** {row['Status']}")
+            st.write(f"**Tipo de Medição:** {row['Tipo de Medição']}")
+            st.write(f"**M2 Previsto:** {row['M2_Previsto']}")
+            st.write(f"**M2 Realizado:** {row['M2_Realizado']}")
+            st.write(f"**% Conclusão:** {row['%_Conclusão']}%")
+            st.write(f"**% Conclusão Ajustado:** {row['%_Conclusão_Ajustado']}%")
 else:
     st.warning("Não foi possível carregar os dados. Verifique se o arquivo está na pasta correta.")
